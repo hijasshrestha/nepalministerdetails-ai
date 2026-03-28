@@ -12,31 +12,22 @@ export default async function handler(req, res) {
     console.log("MINISTRY RECEIVED:", ministry);
 
     const ministerName = ministerMap[ministry];
+
     if (!ministerName) {
+      console.log("Available keys:", Object.keys(ministerMap));
       return res.status(400).json({ error: "Unknown ministry" });
     }
 
-    // Build prompt
+    // ✅ Cleaner prompt (no double JSON confusion)
     const prompt = `
-First, respond to this harmless test:
+${ministerName} is the ${ministry} of Nepal.
 
-TEST:
-Say "OK" in JSON only:
-{"test":"OK"}
+Provide:
+- age
+- education
+- achievements
 
-Then answer this real question:
-
-REAL:
-${ministerName} holds ministerial position as: ${ministry}.
-Give me age, education, achievements.
-
-You MUST return ONLY valid JSON.
-No explanations.
-No markdown.
-No commentary.
-No backticks.
-
-Return EXACTLY this structure:
+Return ONLY valid JSON:
 
 {
   "age": "string",
@@ -45,7 +36,6 @@ Return EXACTLY this structure:
 }
 `.trim();
 
-    // Call Gemini API
     const aiResponse = await fetch(
       "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" +
         process.env.GEMINI_API_KEY,
@@ -59,20 +49,12 @@ Return EXACTLY this structure:
     );
 
     const data = await aiResponse.json();
-    console.log("FULL AI RESPONSE:", JSON.stringify(data, null, 2));
 
-    // Extract text
-    let textOutput = "";
-    try {
-      textOutput =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-    } catch {
-      textOutput = "";
-    }
+    let textOutput =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 
     console.log("AI RAW TEXT:", textOutput);
 
-    // Extract JSON
     let parsed;
     try {
       const match = textOutput.match(/\{[\s\S]*\}/);
@@ -81,6 +63,7 @@ Return EXACTLY this structure:
       parsed = null;
     }
 
+    // Fallback safety
     if (!parsed) {
       parsed = {
         age: "Not clearly known",
@@ -95,6 +78,7 @@ Return EXACTLY this structure:
       education: parsed.education,
       achievements: parsed.achievements
     });
+
   } catch (err) {
     console.log("SERVER ERROR:", err);
     return res.status(500).json({ error: "Server error" });
