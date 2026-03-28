@@ -4,7 +4,7 @@ export const config = {
 
 import { ministerMap } from "../data/ministermap.js";
 
-// Optional in-memory cache to avoid repeated AI calls
+// Simple in-memory cache
 const cache = {};
 
 export default async function handler(req, res) {
@@ -15,7 +15,6 @@ export default async function handler(req, res) {
     console.log("MINISTRY RECEIVED:", ministry);
 
     const ministerName = ministerMap[ministry];
-
     if (!ministerName) {
       console.log("Available keys:", Object.keys(ministerMap));
       return res.status(400).json({ error: "Unknown ministry" });
@@ -27,7 +26,7 @@ export default async function handler(req, res) {
       return res.status(200).json(cache[ministerName]);
     }
 
-    // Prompt for Gemini AI
+    // AI prompt
     const prompt = `
 You are a strict JSON generator.
 
@@ -51,7 +50,7 @@ Return EXACTLY this format:
 }
 `.trim();
 
-    // Safe Gemini API call
+    // Call Gemini 2.5 Flash
     let textOutput = "";
     try {
       const aiResponse = await fetch(
@@ -61,7 +60,8 @@ Return EXACTLY this format:
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
+            contents: [{ parts: [{ text: prompt }] }],
+            temperature: 0  // deterministic output
           })
         }
       );
@@ -70,9 +70,7 @@ Return EXACTLY this format:
       console.log("GEMINI RAW:", raw);
 
       if (aiResponse.ok) {
-        const data = JSON.parse(raw);
-        textOutput =
-          data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+        textOutput = raw.trim();
       } else {
         console.warn("Gemini API error:", raw);
       }
@@ -80,16 +78,17 @@ Return EXACTLY this format:
       console.error("Gemini fetch/parsing error:", err);
     }
 
-    // Parse AI output JSON
+    // Robust JSON parsing
     let parsed;
     try {
-      const match = textOutput.match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : null;
+      const start = textOutput.indexOf("{");
+      const end = textOutput.lastIndexOf("}");
+      parsed = start >= 0 && end >= 0 ? JSON.parse(textOutput.slice(start, end + 1)) : null;
     } catch {
       parsed = null;
     }
 
-    // Fallback data if AI fails
+    // Fallback data
     if (!parsed) {
       parsed = {
         age: "Not clearly known",
@@ -105,7 +104,7 @@ Return EXACTLY this format:
       achievements: parsed.achievements
     };
 
-    // Save to cache
+    // Cache result
     cache[ministerName] = responseData;
 
     return res.status(200).json(responseData);
