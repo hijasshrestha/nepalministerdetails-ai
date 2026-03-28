@@ -18,6 +18,15 @@ export default async function handler(req, res) {
 
     // Build prompt
     const prompt = `
+First, respond to this harmless test:
+
+TEST:
+Say "OK" in JSON only:
+{"test":"OK"}
+
+Then answer this real question:
+
+REAL:
 ${ministerName} holds ministerial position as: ${ministry}.
 Give me age, education, achievements.
 
