@@ -40,6 +40,7 @@ dropdown.addEventListener("change", async () => {
 
     // Display results in plain text
     resultBox.textContent = `
+Name: ${data.name}
 Age: ${data.age}
 Education: ${data.education}
 Achievements:
