@@ -1,53 +1,48 @@
-import { ministerMap } from "./data/ministermap.js";
+async function loadMinistries() {
+  const select = document.getElementById("ministry");
 
-// Get DOM elements
-const dropdown = document.getElementById("ministry");
-const resultBox = document.getElementById("result");
+  const ministries = [
+    "Prime Minister and Ministry of Defence and Industry",
+    "Ministry of Finance",
+    "Ministry of Home Affairs",
+    "Ministry of Foreign Affairs",
+    "Ministry of Education, Science and Technology",
+    "Ministry of Health and Population",
+    "Ministry of Energy, Water Resources and Irrigation",
+    "Ministry of Tourism, Culture and Civil Aviation",
+    "Ministry of Agriculture and Livestock Development"
+  ];
 
-// Add default option
-const defaultOption = document.createElement("option");
-defaultOption.value = "";
-defaultOption.textContent = "-- Select your ministry --";
-dropdown.appendChild(defaultOption);
+  ministries.forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = m;
+    select.appendChild(opt);
+  });
 
-// Populate dropdown from ministerMap
-Object.keys(ministerMap).forEach(ministry => {
-  const option = document.createElement("option");
-  option.value = ministry;
-  option.textContent = ministry;
-  dropdown.appendChild(option);
-});
+  select.addEventListener("change", fetchMinister);
+}
 
-// Auto-fetch when user selects a ministry
-dropdown.addEventListener("change", async () => {
-  const ministry = dropdown.value;
+async function fetchMinister() {
+  const ministry = document.getElementById("ministry").value;
+  const result = document.getElementById("result");
 
-  if (!ministry) {
-    resultBox.textContent = "";
-    return;
-  }
-
-  resultBox.textContent = "Loading...";
+  result.textContent = "Loading...";
 
   try {
-    const response = await fetch(`/api/ministers?ministry=${encodeURIComponent(ministry)}`);
-    const data = await response.json();
+    const res = await fetch(`/api/ministers?ministry=${encodeURIComponent(ministry)}`);
+    const data = await res.json();
 
-    if (data.error) {
-      resultBox.textContent = data.error;
-      return;
-    }
-
-    // Display results in plain text
-    resultBox.textContent = `
+    result.textContent = `
 Name: ${data.name}
 Age: ${data.age}
 Education: ${data.education}
 Achievements:
 - ${data.achievements.join("\n- ")}
     `.trim();
-
   } catch (err) {
-    resultBox.textContent = "Server error";
+    result.textContent = "Error fetching data.";
   }
-});
+}
+
+loadMinistries();
