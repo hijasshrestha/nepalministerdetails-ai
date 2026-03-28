@@ -1,3 +1,7 @@
+export const config = {
+  runtime: "nodejs"
+};
+
 import { ministerMap } from "../data/ministermap.js";
 
 export default async function handler(req, res) {
