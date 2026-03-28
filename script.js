@@ -38,7 +38,7 @@ dropdown.addEventListener("change", async () => {
       return;
     }
 
-    // Display results
+    // Display results in plain text
     resultBox.textContent = `
 Age: ${data.age}
 Education: ${data.education}
