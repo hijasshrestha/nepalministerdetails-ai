@@ -50,6 +50,7 @@ Return EXACTLY this structure:
 
     let textOutput =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log("AI RAW OUTPUT:", textOutput);
 
     let parsed;
     try {
