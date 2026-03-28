@@ -8,21 +8,43 @@
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
+      background: #f0f2f5;
+      color: #333;
     }
-    select, button {
-      padding: 10px;
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2em;
+      color: #222;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.1em;
+    }
+
+    select {
+      padding: 12px;
       font-size: 16px;
-      margin-top: 10px;
       width: 100%;
-    }
-    pre {
-      background: #f5f5f5;
-      padding: 15px;
-      margin-top: 20px;
-      white-space: pre-wrap;
+      margin-bottom: 20px;
       border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    #result {
+      background: #fff;
+      padding: 20px;
+      font-size: 18px;       /* bigger text */
+      line-height: 1.6;      /* more spacing */
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -35,7 +57,6 @@
 
   <pre id="result"></pre>
 
-  <!-- Link to updated script.js -->
   <script type="module" src="script.js"></script>
 
 </body>
