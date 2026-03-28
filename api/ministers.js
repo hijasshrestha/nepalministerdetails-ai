@@ -1,6 +1,7 @@
 import { ministerMap } from "../data/ministermap.js";
 
 export default async function handler(req, res) {
+  console.log("MINISTERS API HIT");
   try {
     const { ministry } = req.query;
 
