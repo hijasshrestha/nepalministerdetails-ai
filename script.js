@@ -1,17 +1,10 @@
+import { ministerMap } from "./data/ministermap.js";
+
 async function loadMinistries() {
   const select = document.getElementById("ministry");
 
-  const ministries = [
-    "Prime Minister and Ministry of Defence and Industry",
-    "Ministry of Finance",
-    "Ministry of Home Affairs",
-    "Ministry of Foreign Affairs",
-    "Ministry of Education, Science and Technology",
-    "Ministry of Health and Population",
-    "Ministry of Energy, Water Resources and Irrigation",
-    "Ministry of Tourism, Culture and Civil Aviation",
-    "Ministry of Agriculture and Livestock Development"
-  ];
+  // ✅ Use single source of truth
+  const ministries = Object.keys(ministerMap);
 
   ministries.forEach(m => {
     const opt = document.createElement("option");
@@ -33,6 +26,12 @@ async function fetchMinister() {
     const res = await fetch(`/api/ministers?ministry=${encodeURIComponent(ministry)}`);
     const data = await res.json();
 
+    // Handle API errors safely
+    if (!res.ok) {
+      result.textContent = data.error || "Unknown error";
+      return;
+    }
+
     result.textContent = `
 Name: ${data.name}
 Age: ${data.age}
@@ -40,9 +39,12 @@ Education: ${data.education}
 Achievements:
 - ${data.achievements.join("\n- ")}
     `.trim();
+
   } catch (err) {
+    console.error(err);
     result.textContent = "Error fetching data.";
   }
 }
 
-loadMinistries();
+// ✅ Load + auto fetch first result
+loadMinistries().then(fetchMinister);
