@@ -4,6 +4,9 @@ export const config = {
 
 import { ministerMap } from "../data/ministermap.js";
 
+// Optional in-memory cache to avoid repeated AI calls
+const cache = {};
+
 export default async function handler(req, res) {
   console.log("MINISTERS API HIT");
 
@@ -18,7 +21,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Unknown ministry" });
     }
 
-    // Cleaner prompt (no double JSON confusion)
+    // Return cached data if exists
+    if (cache[ministerName]) {
+      console.log("Returning cached data for", ministerName);
+      return res.status(200).json(cache[ministerName]);
+    }
+
+    // Prompt for Gemini AI
     const prompt = `
 You are a strict JSON generator.
 
@@ -41,25 +50,37 @@ Return EXACTLY this format:
   "achievements": ["string", "string"]
 }
 `.trim();
-    const aiResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" +
-        process.env.GEMINI_API_KEY,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+
+    // Safe Gemini API call
+    let textOutput = "";
+    try {
+      const aiResponse = await fetch(
+        "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" +
+          process.env.GEMINI_API_KEY,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      );
+
+      const raw = await aiResponse.text();
+      console.log("GEMINI RAW:", raw);
+
+      if (aiResponse.ok) {
+        const data = JSON.parse(raw);
+        textOutput =
+          data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      } else {
+        console.warn("Gemini API error:", raw);
       }
-    );
+    } catch (err) {
+      console.error("Gemini fetch/parsing error:", err);
+    }
 
-    const data = await aiResponse.json();
-
-    let textOutput =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
-
-    console.log("AI RAW TEXT:", textOutput);
-
+    // Parse AI output JSON
     let parsed;
     try {
       const match = textOutput.match(/\{[\s\S]*\}/);
@@ -68,7 +89,7 @@ Return EXACTLY this format:
       parsed = null;
     }
 
-    // Fallback safety
+    // Fallback data if AI fails
     if (!parsed) {
       parsed = {
         age: "Not clearly known",
@@ -77,15 +98,20 @@ Return EXACTLY this format:
       };
     }
 
-    return res.status(200).json({
+    const responseData = {
       name: ministerName,
       age: parsed.age,
       education: parsed.education,
       achievements: parsed.achievements
-    });
+    };
+
+    // Save to cache
+    cache[ministerName] = responseData;
+
+    return res.status(200).json(responseData);
 
   } catch (err) {
-    console.log("SERVER ERROR:", err);
+    console.error("SERVER ERROR:", err);
     return res.status(500).json({ error: "Server error" });
   }
 }
