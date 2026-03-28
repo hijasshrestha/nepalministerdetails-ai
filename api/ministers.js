@@ -20,22 +20,27 @@ export default async function handler(req, res) {
 
     // ✅ Cleaner prompt (no double JSON confusion)
     const prompt = `
-${ministerName} is the ${ministry} of Nepal.
+You are a strict JSON generator.
 
-Provide:
-- age
-- education
-- achievements
+Return ONLY valid JSON.
+No explanation.
+No extra text.
+No markdown.
 
-Return ONLY valid JSON:
+Provide general public information about this person:
+
+Name: ${ministerName}
+
+If exact details are unknown, provide best reasonable estimates.
+
+Return EXACTLY this format:
 
 {
   "age": "string",
   "education": "string",
   "achievements": ["string", "string"]
 }
-`.trim();
-
+`;
     const aiResponse = await fetch(
       "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" +
         process.env.GEMINI_API_KEY,
