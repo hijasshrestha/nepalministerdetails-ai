@@ -13,20 +13,21 @@ export default async function handler(req, res) {
 
     const ministerName = ministerMap[ministry];
 
-    // Build your exact prompt
+    // Build prompt including minister name in the JSON
     const prompt = `
 ${ministerName} holds ministerial position as: ${ministry}.
 Give me age, education, achievements.
 
 Return ONLY this JSON:
 {
+  "name": "string",
   "age": "string",
   "education": "string",
   "achievements": ["string", "string", "string"]
 }
     `.trim();
 
-    // Call Gemini API
+    // Call Gemini 2.5 Flash (your chosen model)
     const aiResponse = await fetch(
       "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" +
         process.env.GEMINI_API_KEY,
@@ -49,14 +50,16 @@ Return ONLY this JSON:
       parsed = JSON.parse(textOutput);
     } catch {
       parsed = {
+        name: ministerName,
         age: "Not clearly known",
         education: "Not clearly known",
         achievements: ["Not clearly known"]
       };
     }
 
-    // Ensure all fields exist
+    // Ensure all fields exist, and always include minister name
     const result = {
+      name: parsed.name || ministerName,
       age: parsed.age || "Not clearly known",
       education: parsed.education || "Not clearly known",
       achievements:
