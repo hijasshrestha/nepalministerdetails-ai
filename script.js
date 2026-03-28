@@ -2,19 +2,24 @@ import { ministerMap } from "./data/ministermap.js";
 
 async function loadMinistries() {
   const select = document.getElementById("ministry");
+
+  // Populate dropdown
   Object.keys(ministerMap).forEach(m => {
     const opt = document.createElement("option");
     opt.value = m;
     opt.textContent = m;
     select.appendChild(opt);
   });
+
+  // Trigger AI fetch on selection
   select.addEventListener("change", fetchMinister);
 }
 
-// fetch minister AI text
+// Fetch AI description for selected minister
 async function fetchMinister() {
   const ministry = document.getElementById("ministry").value;
   const result = document.getElementById("result");
+
   result.textContent = "Loading...";
 
   try {
@@ -26,6 +31,7 @@ async function fetchMinister() {
       return;
     }
 
+    // Display AI free-text response
     result.textContent = data.result || "No response from AI";
 
   } catch (err) {
