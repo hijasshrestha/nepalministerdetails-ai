@@ -3,9 +3,8 @@ import { ministerMap } from "./data/ministermap.js";
 async function loadMinistries() {
   const select = document.getElementById("ministry");
 
-  // ✅ Use single source of truth
+  // Populate <select> with ministries
   const ministries = Object.keys(ministerMap);
-
   ministries.forEach(m => {
     const opt = document.createElement("option");
     opt.value = m;
@@ -13,7 +12,14 @@ async function loadMinistries() {
     select.appendChild(opt);
   });
 
+  // Fetch minister info when selection changes
   select.addEventListener("change", fetchMinister);
+
+  // Auto-fetch first ministry on load
+  if (ministries.length > 0) {
+    select.value = ministries[0];
+    fetchMinister();
+  }
 }
 
 async function fetchMinister() {
@@ -26,19 +32,13 @@ async function fetchMinister() {
     const res = await fetch(`/api/ministers?ministry=${encodeURIComponent(ministry)}`);
     const data = await res.json();
 
-    // Handle API errors safely
     if (!res.ok) {
       result.textContent = data.error || "Unknown error";
       return;
     }
 
-    result.textContent = `
-Name: ${data.name}
-Age: ${data.age}
-Education: ${data.education}
-Achievements:
-- ${data.achievements.join("\n- ")}
-    `.trim();
+    // ✅ NEW: display AI-generated text directly
+    result.textContent = data.result || "No response from AI.";
 
   } catch (err) {
     console.error(err);
@@ -46,5 +46,5 @@ Achievements:
   }
 }
 
-// ✅ Load + auto fetch first result
-loadMinistries().then(fetchMinister);
+// Initialize
+loadMinistries();
