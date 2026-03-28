@@ -48,6 +48,7 @@ Return EXACTLY this structure:
     );
 
     const data = await aiResponse.json();
+    console.log("FULL AI RESPONSE:", JSON.stringify(data, null, 2));
 
     let textOutput =
       data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
