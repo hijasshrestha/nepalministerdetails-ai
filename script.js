@@ -37,7 +37,7 @@ async function fetchMinister() {
       return;
     }
 
-    // ✅ NEW: display AI-generated text directly
+    // Display AI-generated text directly
     result.textContent = data.result || "No response from AI.";
 
   } catch (err) {
