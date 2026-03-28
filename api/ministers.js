@@ -18,13 +18,20 @@ export default async function handler(req, res) {
 ${ministerName} holds ministerial position as: ${ministry}.
 Give me age, education, achievements.
 
-Return ONLY this JSON:
+Return ONLY valid JSON.
+Do NOT add explanations, notes, or extra text.
+Do NOT add markdown.
+Do NOT add backticks.
+Do NOT add labels.
+Return EXACTLY this structure:
+
 {
   "age": "string",
   "education": "string",
   "achievements": ["string", "string", "string"]
 }
-    `.trim();
+`.trim();
+
 
     // Call Gemini 2.5 Flash
     const aiResponse = await fetch(
