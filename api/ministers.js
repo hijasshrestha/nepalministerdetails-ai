@@ -1,56 +1,34 @@
- 
+import { ministerMap } from "../data/ministermap.js";
+
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Method not allowed" });
+    const { ministry } = req.query;
+
+    // Validate ministry
+    if (!ministry || !ministerMap[ministry]) {
+      return res.status(400).json({
+        error: "Unknown ministry"
+      });
     }
 
-    let body = {};
+    const ministerName = ministerMap[ministry];
 
-    // Handle Vercel body parsing fallback
-    if (req.body) {
-      body = req.body;
-    } else {
-      const chunks = [];
-      for await (const chunk of req) chunks.push(chunk);
-      const raw = Buffer.concat(chunks).toString();
-      body = JSON.parse(raw || "{}");
-    }
-
-    const { ministry } = body;
-
-    if (!ministry) {
-      return res.status(400).json({ error: "Ministry is required" });
-    }
-
-    // AI prompt — now AI figures out EVERYTHING
+    // Build your exact prompt
     const prompt = `
-You are given the name of a ministry in Nepal.
-
-Ministry: ${ministry}
-
-Your task:
-1. Identify the CURRENT minister of this ministry.
-2. Provide their approximate age (or age range).
-3. Provide their highest known educational qualification.
-4. Provide 3–5 notable achievements prior to becoming minister.
+${ministerName} holds ministerial position as: ${ministry}.
+Give me age, education, achievements.
 
 Return ONLY this JSON:
-
 {
-  "ministerName": "string",
   "age": "string",
   "education": "string",
   "achievements": ["string", "string", "string"]
 }
-
-If any information is unclear or not publicly confirmed, write "Not clearly known".
-Do NOT add any extra text outside the JSON.
     `.trim();
 
-    // Call Gemini API
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=" +
+    // Call AI
+    const aiResponse = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
         process.env.GEMINI_API_KEY,
       {
         method: "POST",
@@ -61,33 +39,36 @@ Do NOT add any extra text outside the JSON.
       }
     );
 
-    const data = await response.json();
+    const data = await aiResponse.json();
 
-    const rawText =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    let textOutput =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    let parsed = {};
+    let parsed;
     try {
-      parsed = JSON.parse(rawText);
+      parsed = JSON.parse(textOutput);
     } catch {
       parsed = {
-        ministerName: "Not clearly known",
         age: "Not clearly known",
         education: "Not clearly known",
         achievements: ["Not clearly known"]
       };
     }
 
-    return res.status(200).json({
-      ministerName: parsed.ministerName || "Not clearly known",
+    // Ensure all fields exist
+    const result = {
       age: parsed.age || "Not clearly known",
       education: parsed.education || "Not clearly known",
-      achievements: Array.isArray(parsed.achievements)
-        ? parsed.achievements
-        : ["Not clearly known"]
-    });
+      achievements:
+        Array.isArray(parsed.achievements) && parsed.achievements.length > 0
+          ? parsed.achievements
+          : ["Not clearly known"]
+    };
+
+    return res.status(200).json(result);
   } catch (error) {
-    console.error("Server error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({
+      error: "Server error"
+    });
   }
 }
