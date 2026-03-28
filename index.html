@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Current Ministers of Nepal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 40px auto;
+      line-height: 1.6;
+    }
+    label, select, button {
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Current Ministers of Nepal</h1>
+
+  <label for="ministry">Select your ministry:</label><br>
+  <select id="ministry">
+    <option value="">-- Select your ministry --</option>
+
+    <option>Prime Minister and Ministry of Defence and Industry</option>
+    <option>Ministry of Finance</option>
+    <option>Ministry of Home Affairs</option>
+    <option>Ministry of Foreign Affairs</option>
+    <option>Ministry of Physical Infrastructure</option>
+    <option>Ministry of Energy</option>
+    <option>Ministry of Tourism</option>
+    <option>Ministry of Education</option>
+    <option>Ministry of Health</option>
+    <option>Ministry of Communications</option>
+    <option>Ministry of General Administration</option>
+    <option>Ministry of Law</option>
+    <option>Ministry of Agriculture</option>
+    <option>Ministry of Labour</option>
+    <option>Ministry of Women and Children</option>
+  </select>
+
+  <button onclick="getMinister()">Show Minister</button>
+
+  <div id="output"></div>
+
+  <script>
+    async function getMinister() {
+      const ministry = document.getElementById("ministry").value;
+      const output = document.getElementById("output");
+
+      if (!ministry) {
+        output.innerHTML = "<p>Please select a ministry.</p>";
+        return;
+      }
+
+      output.innerHTML = "<p>Loading...</p>";
+
+      try {
+        const response = await fetch("/api/ministers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ministry })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          output.innerHTML = `<p>${data.error}</p>`;
+          return;
+        }
+
+        output.innerHTML = `
+          <p><strong>Name of Minister:</strong> ${data.ministerName || "N/A"}</p>
+          <p><strong>Age of Minister:</strong> ${data.age || "N/A"}</p>
+          <p><strong>Educational qualification:</strong> ${data.education || "N/A"}</p>
+          <p><strong>Notable achievements prior:</strong><br />${
+            data.achievements && data.achievements.length
+              ? "<ul>" + data.achievements.map(a => `<li>${a}</li>`).join("") + "</ul>"
+              : "N/A"
+          }</p>
+        `;
+      } catch (err) {
+        output.innerHTML = "<p>Something went wrong. Please try again.</p>";
+      }
+    }
+  </script>
+
+</body>
+</html>
+ 
